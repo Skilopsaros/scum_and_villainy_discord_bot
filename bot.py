@@ -45,10 +45,10 @@ async def on_message(message):
 		if message_list[1] in ["create", "c"]:
 			if message_list[2] in clocks:
 				await message.channel.send(f"Replacing clock: {message_list[2]} with {clocks[message_list[2]]["filled"]}/{clocks[message_list[2]]["size"]} segments filled")
-			filled = int(message_list[3]) if len(message_list) >= 4 else 0
+			filled = int(message_list[4]) if len(message_list) >= 4 else 0
 			clocks[message_list[2]] = {"size":int(message_list[3]), "filled":filled}
 			await message.channel.send(f"**Created clock: {message_list[2]}**")
-			brain.circ_sectors(int(message_list[3]), 0).savefig("clock.png")
+			brain.circ_sectors(int(message_list[3]), clocks[message_list[2]]["filled"]).savefig("clock.png")
 			await message.channel.send(file=discord.File('clock.png'))
 
 		elif message_list[1] in ["print", "p"]:
