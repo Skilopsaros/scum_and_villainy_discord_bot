@@ -3,6 +3,7 @@ import brain
 import os
 import dotenv
 import json
+import re
 
 dotenv.load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -18,6 +19,7 @@ dice_emojis = [
 	"<:face_5:1429054738242076702>",
 	"<:face_6:1429054739546374256>"
 ]
+
 
 @client.event
 async def on_message(message):
@@ -42,19 +44,24 @@ async def on_message(message):
 				clocks = json.load(f)
 		except json.decoder.JSONDecodeError:
 			clocks = {}
+
+		async def send_clock(clock):
+			brain.circ_sectors(clocks[clock]["size"], clocks[clock]["filled"]).savefig("clock.png")
+			await message.channel.send(f"## {message_list[2]}",file=discord.File('clock.png'))
+
 		if message_list[1] in ["create", "c"]:
 			if message_list[2] in clocks:
 				await message.channel.send(f"Replacing clock: {message_list[2]} with {clocks[message_list[2]]["filled"]}/{clocks[message_list[2]]["size"]} segments filled")
-			filled = int(message_list[4]) if len(message_list) >= 4 else 0
+			
+			filled = int(message_list[4]) if len(message_list) >= 5 else 0
 			clocks[message_list[2]] = {"size":int(message_list[3]), "filled":filled}
+
 			await message.channel.send(f"**Created clock: {message_list[2]}**")
-			brain.circ_sectors(int(message_list[3]), clocks[message_list[2]]["filled"]).savefig("clock.png")
-			await message.channel.send(file=discord.File('clock.png'))
+			await send_clock(message_list[2])
 
 		elif message_list[1] in ["print", "p"]:
 			if message_list[2] in clocks:
-				brain.circ_sectors(clocks[message_list[2]]["size"], clocks[message_list[2]]["filled"]).savefig("clock.png")
-				await message.channel.send(f"## {message_list[2]}",file=discord.File('clock.png'))
+				await send_clock(message_list[2])
 			else:
 				await message.channel.send(f"clock {message_list[2]} doesn't exist.")
 		
@@ -70,8 +77,8 @@ async def on_message(message):
 					new_fill = 0
 				clocks[message_list[2]]["filled"] = new_fill
 
-				brain.circ_sectors(clocks[message_list[2]]["size"], clocks[message_list[2]]["filled"]).savefig("clock.png")
-				await message.channel.send(f"## {message_list[2]}",file=discord.File('clock.png'))
+
+				await send_clock(message_list[2])
 				if segments_exceeded > 0:
 					await message.channel.send(f"{segments_exceeded} segments exceeding full")
 				if segments_exceeded < 0:
@@ -103,7 +110,35 @@ async def on_message(message):
 		with open("clocks.json", "w") as f:
 			json.dump(clocks, f, indent=4)
 	
+	if message.content[0:2] == "%g":
+		try:
+			with open("gambits.json") as f:
+				gambits = json.load(f)
+		except json.decoder.JSONDecodeError:
+			gambits = {"default":3, "current":3}
 
+		if len(message_list) == 1 or message_list[1] in ["print", "p"]:
+			await message.channel.send(f"Remaining Gambits: {gambits["current"]}")
+
+		elif message_list[1] in ["set", "s"]:
+			gambits["current"] = int(message_list[2])
+			await message.channel.send(f"Gambits set to {gambits["current"]}")
+		
+		elif message_list[1] in ["reset", "r"]:
+			gambits["current"] = gambits["default"]
+			await message.channel.send(f"Gambits reset to {gambits["current"]}")
+		
+		elif message_list[1] in ["default", "set_default", "d"]:
+			gambits["default"] = int(message_list[2])
+			await message.channel.send(f"Default starting gambits set to {gambits["current"]}")
+
+		elif bool(re.match(r"[+-]?\d+$", message_list[1])):
+			gambits["current"] += int(message_list[1])
+			await message.channel.send(f"Remaining Gambits: {gambits["current"]}")
+
+		with open("gambits.json", "w") as f:
+			json.dump(gambits, f, indent=4)
+		
 
 
 
