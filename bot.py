@@ -51,7 +51,7 @@ async def on_message(message):
 
 		if message_list[1] in ["create", "c"]:
 			if message_list[2] in clocks:
-				await message.channel.send(f"Replacing clock: {message_list[2]} with {clocks[message_list[2]]["filled"]}/{clocks[message_list[2]]["size"]} segments filled")
+				await message.channel.send(f"Replacing clock: {message_list[2]} with {clocks[message_list[2]]['filled']}/{clocks[message_list[2]]['size']} segments filled")
 			
 			filled = int(message_list[4]) if len(message_list) >= 5 else 0
 			clocks[message_list[2]] = {"size":int(message_list[3]), "filled":filled}
@@ -107,6 +107,22 @@ async def on_message(message):
 			else:
 				await message.channel.send(f"clock {message_list[2]} doesn't exist.")
 
+		elif message_list[1] in ["list", "ls", "l"]:
+			answer = ""
+			for clock, content in clocks.items():
+				answer += f"**{clock}**: {content['filled']}/{content['size']}\n"
+			await message.channel.send(answer)
+		
+		elif message_list[1] in ["del", "delete", "d"]:
+			if message_list[2] in clocks:
+				await message.channel.send(f"deleted clock **{message_list[2]}**: {clocks[message_list[2]]['filled']}/{clocks[message_list[2]]['size']}")
+				del(clocks[message_list[2]])
+			else:
+				await message.channel.send(f"clock {message_list[2]} not found.")
+				
+		with open("clocks.json", "w") as f:
+			json.dump(clocks, f, indent=4)
+
 		with open("clocks.json", "w") as f:
 			json.dump(clocks, f, indent=4)
 	
@@ -118,23 +134,23 @@ async def on_message(message):
 			gambits = {"default":3, "current":3}
 
 		if len(message_list) == 1 or message_list[1] in ["print", "p"]:
-			await message.channel.send(f"Remaining Gambits: {gambits["current"]}")
+			await message.channel.send(f"Remaining Gambits: {gambits['current']}")
 
 		elif message_list[1] in ["set", "s"]:
 			gambits["current"] = int(message_list[2])
-			await message.channel.send(f"Gambits set to {gambits["current"]}")
+			await message.channel.send(f"Gambits set to {gambits['current']}")
 		
 		elif message_list[1] in ["reset", "r"]:
 			gambits["current"] = gambits["default"]
-			await message.channel.send(f"Gambits reset to {gambits["current"]}")
+			await message.channel.send(f"Gambits reset to {gambits['current']}")
 		
 		elif message_list[1] in ["default", "set_default", "d"]:
 			gambits["default"] = int(message_list[2])
-			await message.channel.send(f"Default starting gambits set to {gambits["current"]}")
+			await message.channel.send(f"Default starting gambits set to {gambits['current']}")
 
 		elif bool(re.match(r"[+-]?\d+$", message_list[1])):
 			gambits["current"] += int(message_list[1])
-			await message.channel.send(f"Remaining Gambits: {gambits["current"]}")
+			await message.channel.send(f"Remaining Gambits: {gambits['current']}")
 
 		with open("gambits.json", "w") as f:
 			json.dump(gambits, f, indent=4)
